@@ -11,12 +11,17 @@ public class HdfsPathDataset extends SparkDataset {
   
   public HdfsPathDataset(Path path, String platformInstance, FabricType fabricType) {
     // TODO check static partitions?
-    this(path.toUri().toString(), platformInstance, fabricType);
+    this(String.join("/",
+            path.toUri().toString()
+            .split("stamp_date=")[0]
+            .split("date_ymd=")[0]
+            .split("3://")[1]
+            .split("/")), platformInstance, fabricType);
   }
 
   public HdfsPathDataset(String pathUri, String platformInstance, FabricType fabricType) {
     // TODO check static partitions?
-    super("hdfs", platformInstance, pathUri, fabricType);
+    super("s3", platformInstance, pathUri, fabricType);
   }
 
 }
