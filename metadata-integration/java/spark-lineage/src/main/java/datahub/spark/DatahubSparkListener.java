@@ -84,7 +84,7 @@ public class DatahubSparkListener extends SparkListener {
 
       String jsonPlan = (plan != null) ? plan.toJSON() : null;
       String sqlStartJson =
-          (sqlStart != null) ? JsonMethods$.MODULE$.compact(JsonProtocol.sparkEventToJson(sqlStart)) : null;
+          (sqlStart != null) ? JsonProtocol.sparkEventToJsonString(sqlStart) : null;
       log.debug("SqlStartTask with parameters: sqlStart: {}, plan: {}, ctx: {}", sqlStartJson, jsonPlan, ctx);
     }
 
