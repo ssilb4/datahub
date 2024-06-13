@@ -45,6 +45,8 @@ import datahub.spark.model.SQLQueryExecStartEvent;
 import datahub.spark.model.dataset.SparkDataset;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.util.JsonProtocol;
+import org.json4s.JsonAST;
+import java.lang.reflect.*;
 import org.json4s.jackson.JsonMethods$;
 import scala.collection.JavaConversions;
 import scala.runtime.AbstractFunction1;
@@ -77,14 +79,37 @@ public class DatahubSparkListener extends SparkListener {
     private final SparkContext ctx;
     private final LogicalPlan plan;
 
+    private String grepSqlStartJsonSparkCompatible(SparkListenerEvent sqlStart) {
+      String result = null;
+      if (result == null) {
+        try {
+          Class<?> c = Class.forName(JsonProtocol.class.getName());
+          //spark lt 3.4.x
+          Method method_3_2_x = c.getDeclaredMethod("sparkEventToJson", org.apache.spark.scheduler.SparkListenerEvent.class);
+
+          //spark ge 3.4.x
+          Method method_3_4_x = c.getDeclaredMethod("sparkEventToJsonString", org.apache.spark.scheduler.SparkListenerEvent.class);
+
+          if (method_3_4_x != null) {
+            result = JsonMethods$.MODULE$.compact((JsonAST.JValue) method_3_4_x.invoke(null, sqlStart));
+          } else {
+            result = JsonMethods$.MODULE$.compact((JsonAST.JValue) method_3_2_x.invoke(null, sqlStart));
+          }
+        } catch (Exception e) {
+        }
+      }
+
+      return result;
+    }
     public SqlStartTask(SparkListenerSQLExecutionStart sqlStart, LogicalPlan plan, SparkContext ctx) {
       this.sqlStart = sqlStart;
       this.plan = plan;
       this.ctx = ctx;
 
       String jsonPlan = (plan != null) ? plan.toJSON() : null;
-      String sqlStartJson =
-          (sqlStart != null) ? JsonProtocol.sparkEventToJsonString(sqlStart) : null;
+
+      String sqlStartJson = (sqlStart != null) ? grepSqlStartJsonSparkCompatible(sqlStart) : null;
+
       log.debug("SqlStartTask with parameters: sqlStart: {}, plan: {}, ctx: {}", sqlStartJson, jsonPlan, ctx);
     }
 

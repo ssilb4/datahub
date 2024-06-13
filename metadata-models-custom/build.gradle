@@ -13,6 +13,7 @@ plugins {
     id 'base'
 }
 apply plugin: 'pegasus'
+apply plugin: 'maven'
 
 
 if (project.hasProperty('projVersion')) {
