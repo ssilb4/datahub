@@ -79,39 +79,40 @@ public class DatahubSparkListener extends SparkListener {
     private final SparkContext ctx;
     private final LogicalPlan plan;
 
-    private String grepSqlStartJsonSparkCompatible(SparkListenerEvent sqlStart) {
-      String result = null;
-      if (result == null) {
-        try {
-          Class<?> c = Class.forName(JsonProtocol.class.getName());
-          //spark lt 3.4.x
-          Method method_3_2_x = c.getDeclaredMethod("sparkEventToJson", org.apache.spark.scheduler.SparkListenerEvent.class);
-
-          //spark ge 3.4.x
-          Method method_3_4_x = c.getDeclaredMethod("sparkEventToJsonString", org.apache.spark.scheduler.SparkListenerEvent.class);
-
-          if (method_3_4_x != null) {
-            result = JsonMethods$.MODULE$.compact((JsonAST.JValue) method_3_4_x.invoke(null, sqlStart));
-          } else {
-            result = JsonMethods$.MODULE$.compact((JsonAST.JValue) method_3_2_x.invoke(null, sqlStart));
-          }
-        } catch (Exception e) {
-        }
-      }
-
-      return result;
-    }
     public SqlStartTask(SparkListenerSQLExecutionStart sqlStart, LogicalPlan plan, SparkContext ctx) {
       this.sqlStart = sqlStart;
       this.plan = plan;
       this.ctx = ctx;
 
       String jsonPlan = (plan != null) ? plan.toJSON() : null;
-
-      String sqlStartJson = (sqlStart != null) ? grepSqlStartJsonSparkCompatible(sqlStart) : null;
+      String sqlStartJson =
+          (sqlStart != null) ? grepSqlStartJsonSparkCompatible(sqlStart) : null;
 
       log.debug("SqlStartTask with parameters: sqlStart: {}, plan: {}, ctx: {}", sqlStartJson, jsonPlan, ctx);
     }
+
+    private String grepSqlStartJsonSparkCompatible(SparkListenerEvent sqlStart) {
+    String result = null;
+    if (result == null) {
+        try {
+            Class<?> c = Class.forName(JsonProtocol.class.getName());
+            //spark lt 3.4.x
+            Method method_3_2_x = c.getDeclaredMethod("sparkEventToJson", org.apache.spark.scheduler.SparkListenerEvent.class);
+
+            //spark ge 3.4.x
+            Method method_3_4_x = c.getDeclaredMethod("sparkEventToJsonString", org.apache.spark.scheduler.SparkListenerEvent.class);
+
+            if (method_3_2_x != null) {
+                result = JsonMethods$.MODULE$.compact((JsonAST.JValue) method_3_2_x.invoke(null, sqlStart));
+            } else {
+                result = JsonMethods$.MODULE$.compact((JsonAST.JValue) method_3_4_x.invoke(null, sqlStart));
+            }
+        } catch (Exception e) {
+        }
+    }
+
+    return result;
+}
 
     public void run() {
       if (ctx == null) {

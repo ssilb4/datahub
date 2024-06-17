@@ -41,7 +41,6 @@ dependencies {
 
   implementation externalDependency.typesafeConfig
   implementation externalDependency.opentracingJdbc
-  implementation 'org.apache.httpcomponents:httpclient:4.5.14'
   shadow 'org.apache.httpcomponents:httpclient:4.5.14'
 
   implementation project(path: ':metadata-integration:java:datahub-client', configuration: 'shadow')
@@ -69,18 +68,6 @@ dependencies {
   } // older version to allow older guava
 
   testImplementation(externalDependency.testContainersPostgresql)
-
-  constraints {
-    implementation('org.apache.httpcomponents:httpclient:4.5.13') {
-      because 'Avoid version conflicts'
-    }
-  }
-}
-
-configurations.all {
-  resolutionStrategy {
-    force 'org.apache.httpcomponents:httpclient:4.5.13'
-  }
 }
 
 task checkShadowJar(type: Exec) {
@@ -110,7 +97,7 @@ shadowJar {
   }
   relocate 'com.fasterxml.jackson', 'datahub.shaded.jackson'
   relocate 'org.apache.http','datahub.spark2.shaded.http'
-  //relocate 'org.apache.hc','datahub.spark2.shaded.http'
+  //relocate 'org.apache.http.conn','datahub.spark2.shaded.http.conn'
   relocate 'org.apache.commons.codec', 'datahub.spark2.shaded.o.a.c.codec'
   relocate 'org.apache.commons.compress', 'datahub.spark2.shaded.o.a.c.compress'
   relocate 'mozilla', 'datahub.spark2.shaded.mozilla'
